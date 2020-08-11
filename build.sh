@@ -8,5 +8,4 @@ conda activate pyembree3
 export CPATH=/home/vagrant/dev/pyembree-3/embree-3.11.0.x86_64.linux/include
 export LIBRARY_PATH=/home/vagrant/dev/pyembree-3/embree-3.11.0.x86_64.linux/lib
 
-python setup.py build
-python setup.py install
+python setup.py build && python setup.py install
