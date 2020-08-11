@@ -38,6 +38,7 @@ dirs[:, 0] = 1.0
 maxdist = np.empty(N, dtype='float32')
 exists = np.arange(N)
 
+
 def transport_region(r, origins, maxdist, exist):
     n = len(origins)
     u = np.random.random(n)
@@ -55,6 +56,7 @@ def transport_region(r, origins, maxdist, exist):
     neworigins[:,1:] = 0.0
     exist = exist[~bi]
     return intersects, neworigins, exist
+
 
 for r in range(R):
     intersects, origins, exists = transport_region(r, origins, maxdist, exists)

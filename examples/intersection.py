@@ -6,6 +6,7 @@ from pyembree.mesh_construction import TriangleMesh
 
 N = 4
 
+
 def xplane(x):
     return [[[x, -1.0, -1.0],
              [x, +1.0, -1.0],

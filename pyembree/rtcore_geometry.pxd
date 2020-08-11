@@ -1,10 +1,12 @@
+# distutils: language=c++
+
 # rtcore_geometry wrapper
 
 cimport rtcore as rtc
 
 from .rtcore_ray cimport RTCRay, RTCRay4, RTCRay8, RTCRay16
 from .rtcore_scene cimport RTCScene
-from .rtcore_geometry cimport RTCBufferType
+from .rtcore_buffer cimport RTCBufferType
 
 cimport cython
 cimport numpy as np

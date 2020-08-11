@@ -1,4 +1,5 @@
-# rtcore_ray.pxd wrapper
+# distutils: language=c++
+
 
 cimport cython
 cimport numpy as np
@@ -32,7 +33,7 @@ cdef extern from "embree3/rtcore_ray.h":
 
         unsigned int geomID
         unsigned int primID
-        unsigned int instID
+        unsigned int instID[1]
 
     cdef struct RTCRayHit:
         RTCRay ray
@@ -66,7 +67,7 @@ cdef extern from "embree3/rtcore_ray.h":
 
         unsigned int geomID[4]
         unsigned int primID[4]
-        unsigned int instID[4]
+        unsigned int instID[1][4]
 
     cdef struct RTCRayHit4:
         RTCRay4 ray
@@ -100,7 +101,7 @@ cdef extern from "embree3/rtcore_ray.h":
 
         unsigned int geomID[8]
         unsigned int primID[8]
-        unsigned int instID[8]
+        unsigned int instID[1][8]
 
     cdef struct RTCRayHit8:
         RTCRay8 ray
@@ -133,8 +134,8 @@ cdef extern from "embree3/rtcore_ray.h":
 
         unsigned int geomID[16]
         unsigned int primID[16]
-        unsigned int instID[16]
+        unsigned int instID[1][16]
 
     cdef struct RTCRayHit16:
         RTCRay16 ray
-        RTCHit16
+        RTCHit16 hit

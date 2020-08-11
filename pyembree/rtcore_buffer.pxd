@@ -1,3 +1,5 @@
+# distutils: language=c++
+
 cdef extern from "embree3/rtcore_buffer.h":
 
     cdef enum RTCBufferType:

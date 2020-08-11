@@ -1,3 +1,5 @@
+# distutils: language=c++
+
 # rtcore_scene.pxd wrapper
 
 cimport cython
@@ -40,26 +42,26 @@ cdef extern from "embree3/rtcore_scene.h":
     void rtcJoinCommitScene(RTCScene scene)
 
 
-    void rtcIntersect1(RTCScene scene, rtc.RTCIntersectContext& context, RTCRayHit& ray)
+    void rtcIntersect1(RTCScene scene, rtc.RTCIntersectContext* context, RTCRayHit* ray)
 
-    void rtcIntersect4(const void* valid, RTCScene scene, rtc.RTCIntersectContext& context, RTCRayHit4& ray)
+    void rtcIntersect4(const void* valid, RTCScene scene, rtc.RTCIntersectContext* context, RTCRayHit4* ray)
 
-    void rtcIntersect8(const void* valid, RTCScene scene, rtc.RTCIntersectContext& context, RTCRayHit8& ray)
+    void rtcIntersect8(const void* valid, RTCScene scene, rtc.RTCIntersectContext* context, RTCRayHit8* ray)
 
-    void rtcIntersect16(const void* valid, RTCScene scene, rtc.RTCIntersectContext& context, RTCRayHit16& ray)
+    void rtcIntersect16(const void* valid, RTCScene scene, rtc.RTCIntersectContext* context, RTCRayHit16* ray)
 
-    void rtcIntersect1M(RTCScene scene, rtc.RTCIntersectContext& context, RTCRayHit& rayhit, unsigned int M, size_t byteStride);
+    void rtcIntersect1M(RTCScene scene, rtc.RTCIntersectContext* context, RTCRayHit* rayhit, unsigned int M, size_t byteStride);
 
 
-    void rtcOccluded(RTCScene scene, RTCRayHit& ray)
+    void rtcOccluded(RTCScene scene, rtc.RTCIntersectContext* context, RTCRayHit* ray)
 
-    void rtcOccluded4(const void* valid, RTCScene scene, RTCRayHit4& ray)
+    void rtcOccluded4(const void* valid, RTCScene scene, rtc.RTCIntersectContext* context, RTCRayHit4* ray)
 
-    void rtcOccluded8(const void* valid, RTCScene scene, RTCRayHit8& ray)
+    void rtcOccluded8(const void* valid, RTCScene scene, rtc.RTCIntersectContext* context, RTCRayHit8* ray)
 
-    void rtcOccluded16(const void* valid, RTCScene scene, RTCRayHit16& ray)
+    void rtcOccluded16(const void* valid, RTCScene scene, rtc.RTCIntersectContext* context, RTCRayHit16* ray)
 
-    void rtcOccluded1M(RTCScene scene, rtc.RTCIntersectContext& context, RTCRayHit& ray, unsigned int M, size_t byteStride);
+    void rtcOccluded1M(RTCScene scene, rtc.RTCIntersectContext* context, RTCRayHit* ray, unsigned int M, size_t byteStride);
 
     void rtcReleaseScene(RTCScene scene)
 
@@ -67,7 +69,7 @@ cdef class EmbreeScene:
     cdef RTCScene scene_i
     # Optional device used if not given, it should be as input of EmbreeScene
     cdef public int is_committed
-    cdef rtc.EmbreeDevice device
+    cdef rtc.EmbreeDevice embree_device
 
 cdef enum rayQueryType:
     intersect,
