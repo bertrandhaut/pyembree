@@ -8,9 +8,10 @@ cimport rtcore_ray as rtcr
 cimport rtcore_geometry as rtcg
 
 
+
 log = logging.getLogger('pyembree')
 
-cdef void error_printer(const rtc.RTCError code, const char *_str):
+cdef void error_printer(void * user_ptr, const rtc.RTCError code, const char *_str):
     """
     error_printer function depends on embree version
     Embree 2.14.1
@@ -29,8 +30,8 @@ cdef class EmbreeScene:
             # We store the embree device inside EmbreeScene to avoid premature deletion
             self.device = rtc.EmbreeDevice()
             device = self.device
-        rtc.rtcDeviceSetErrorFunction(device.device, error_printer)
-        self.scene_i = rtcDeviceNewScene(device.device, RTC_SCENE_STATIC, RTC_INTERSECT1)
+        rtc.rtcDeviceSetErrorFunction(device.device, error_printer, None)
+        self.scene_i = rtcNewScene(device.device)
         self.is_committed = 0
 
     def run(self, np.ndarray[np.float32_t, ndim=2] vec_origins,
@@ -123,4 +124,5 @@ cdef class EmbreeScene:
                 return intersect_ids
 
     def __dealloc__(self):
-        rtcDeleteScene(self.scene_i)
+
+        rtcReleaseScene(self.scene_i)

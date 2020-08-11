@@ -1,88 +1,61 @@
 # rtcore_geometry wrapper
 
+cimport rtcore as rtc
+
 from .rtcore_ray cimport RTCRay, RTCRay4, RTCRay8, RTCRay16
 from .rtcore_scene cimport RTCScene
+from .rtcore_geometry cimport RTCBufferType
+
 cimport cython
 cimport numpy as np
 
-cdef extern from "embree2/rtcore_geometry.h":
-    cdef unsigned int RTC_INVALID_GEOMETRY_ID
+cdef extern from "embree3/rtcore_geometry.h":
 
-    cdef enum RTCBufferType:
-        RTC_INDEX_BUFFER
-        RTC_VERTEX_BUFFER
-        RTC_VERTEX_BUFFER0
-        RTC_VERTEX_BUFFER1
+    cdef enum RTCGeometryType:
+          RTC_GEOMETRY_TYPE_TRIANGLE = 0, # triangle mesh
+          RTC_GEOMETRY_TYPE_QUAD     = 1, # quad (triangle pair) mesh
+          RTC_GEOMETRY_TYPE_GRID     = 2, # grid mesh
 
-        RTC_FACE_BUFFER
-        RTC_LEVEL_BUFFER
+          RTC_GEOMETRY_TYPE_SUBDIVISION = 8, # Catmull-Clark subdivision surface
+        
+          RTC_GEOMETRY_TYPE_ROUND_LINEAR_CURVE  = 16, # Round (rounded cone like) linear curves 
+          RTC_GEOMETRY_TYPE_FLAT_LINEAR_CURVE   = 17, # flat (ribbon-like) linear curves
+        
+          RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE  = 24, # round (tube-like) Bezier curves
+          RTC_GEOMETRY_TYPE_FLAT_BEZIER_CURVE   = 25, # flat (ribbon-like) Bezier curves
+          RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BEZIER_CURVE  = 26, # flat normal-oriented Bezier curves
+          
+          RTC_GEOMETRY_TYPE_ROUND_BSPLINE_CURVE = 32, # round (tube-like) B-spline curves
+          RTC_GEOMETRY_TYPE_FLAT_BSPLINE_CURVE  = 33, # flat (ribbon-like) B-spline curves
+          RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BSPLINE_CURVE  = 34, # flat normal-oriented B-spline curves
+        
+          RTC_GEOMETRY_TYPE_ROUND_HERMITE_CURVE = 40, # round (tube-like) Hermite curves
+          RTC_GEOMETRY_TYPE_FLAT_HERMITE_CURVE  = 41, # flat (ribbon-like) Hermite curves
+          RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_HERMITE_CURVE  = 42, # flat normal-oriented Hermite curves
+        
+          RTC_GEOMETRY_TYPE_SPHERE_POINT = 50,
+          RTC_GEOMETRY_TYPE_DISC_POINT = 51,
+          RTC_GEOMETRY_TYPE_ORIENTED_DISC_POINT = 52,
+        
+          RTC_GEOMETRY_TYPE_ROUND_CATMULL_ROM_CURVE = 58, # round (tube-like) Catmull-Rom curves
+          RTC_GEOMETRY_TYPE_FLAT_CATMULL_ROM_CURVE  = 59, # flat (ribbon-like) Catmull-Rom curves
+          RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_CATMULL_ROM_CURVE  = 60, # flat normal-oriented Catmull-Rom curves
+        
+          RTC_GEOMETRY_TYPE_USER     = 120, # user-defined geometry
+          RTC_GEOMETRY_TYPE_INSTANCE = 121  # scene instance
 
-        RTC_EDGE_CREASE_INDEX_BUFFER 
-        RTC_EDGE_CREASE_WEIGHT_BUFFER 
 
-        RTC_VERTEX_CREASE_INDEX_BUFFER 
-        RTC_VERTEX_CREASE_WEIGHT_BUFFER 
+    ctypedef void* RTCGeometry
+    RTCGeometry rtcNewGeometry(rtc.RTCDevice hdevice, RTCGeometryType type)
 
-        RTC_HOLE_BUFFER          
+    void rtcReleaseGeometry(RTCGeometry hgeometry)
 
-    cdef enum RTCMatrixType:
-        RTC_MATRIX_ROW_MAJOR
-        RTC_MATRIX_COLUMN_MAJOR
-        RTC_MATRIX_COLUMN_MAJOR_ALIGNED16
 
-    cdef enum RTCGeometryFlags:
-        RTC_GEOMETRY_STATIC
-        RTC_GEOMETRY_DEFORMABLE
-        RTC_GEOMETRY_DYNAMIC
+    void* rtcSetNewGeometryBuffer(RTCGeometry hgeometry, RTCBufferType type, unsigned int slot, rtc.RTCFormat format, size_t byteStride, size_t itemCount)
 
-    cdef struct RTCBounds:
-        float lower_x, lower_y, lower_z, align0
-        float upper_x, upper_y, upper_z, align1
+    void rtcSetSharedGeometryBuffer(RTCGeometry hgeometry, RTCBufferType type, unsigned int slot, rtc.RTCFormat format, const void* ptr, size_t byteOffset, size_t byteStride, size_t itemCount)
 
-    ctypedef void (*RTCFilterFunc)(void* ptr, RTCRay& ray)
-    ctypedef void (*RTCFilterFunc4)(void* ptr, RTCRay4& ray)
-    ctypedef void (*RTCFilterFunc8)(void* ptr, RTCRay8& ray)
-    ctypedef void (*RTCFilterFunc16)(void* ptr, RTCRay16& ray)
 
-    ctypedef void (*RTCDisplacementFunc)(void* ptr, unsigned geomID, unsigned primID,
-                                         const float* u, const float* v,
-                                         const float* nx, const float* ny, const float* nz,
-                                         float* px, float* py, float* pz, size_t N)
+    void rtcCommitGeometry (RTCGeometry hgeometry)
 
-    unsigned rtcNewInstance(RTCScene target, RTCScene source)
-    void rtcSetTransform(RTCScene scene, unsigned geomID,
-                         RTCMatrixType layout, const float *xfm)
-    unsigned rtcNewTriangleMesh(RTCScene scene, RTCGeometryFlags flags, 
-                                size_t numTriangles, size_t numVertices,
-                                size_t numTimeSteps)
-
-    unsigned rtcNewSubdivisionMesh (RTCScene scene, RTCGeometryFlags flags,
-                                    size_t numFaces, size_t numEdges,
-                                    size_t numVertices, size_t numEdgeCreases,
-                                    size_t numVertexCreases, size_t numHoles,
-                                    size_t numTimeSteps)
-    unsigned rtcNewHairGeometry (RTCScene scene, RTCGeometryFlags flags,
-                                 size_t numCurves, size_t numVertices,
-                                 size_t numTimeSteps)
-    void rtcSetMask(RTCScene scene, unsigned geomID, int mask)
-    void *rtcMapBuffer(RTCScene scene, unsigned geomID, RTCBufferType type)
-    void rtcUnmapBuffer(RTCScene scene, unsigned geomID, RTCBufferType type)
-    void rtcSetBuffer(RTCScene scene, unsigned geomID, RTCBufferType type,
-                      void *ptr, size_t offset, size_t stride)
-    void rtcEnable(RTCScene scene, unsigned geomID)
-    void rtcUpdate(RTCScene scene, unsigned geomID)
-    void rtcUpdateBuffer(RTCScene scene, unsigned geomID, RTCBufferType type)
-    void rtcDisable(RTCScene scene, unsigned geomID)
-    void rtcSetDisplacementFunction (RTCScene scene, unsigned geomID, RTCDisplacementFunc func, RTCBounds* bounds)
-    void rtcSetIntersectionFilterFunction (RTCScene scene, unsigned geomID, RTCFilterFunc func)
-    void rtcSetIntersectionFilterFunction4 (RTCScene scene, unsigned geomID, RTCFilterFunc4 func)
-    void rtcSetIntersectionFilterFunction8 (RTCScene scene, unsigned geomID, RTCFilterFunc8 func)
-    void rtcSetIntersectionFilterFunction16 (RTCScene scene, unsigned geomID, RTCFilterFunc16 func)
-    void rtcSetOcclusionFilterFunction (RTCScene scene, unsigned geomID, RTCFilterFunc func)
-    void rtcSetOcclusionFilterFunction4 (RTCScene scene, unsigned geomID, RTCFilterFunc4 func)
-    void rtcSetOcclusionFilterFunction8 (RTCScene scene, unsigned geomID, RTCFilterFunc8 func)
-    void rtcSetOcclusionFilterFunction16 (RTCScene scene, unsigned geomID, RTCFilterFunc16 func)
-    void rtcSetUserData (RTCScene scene, unsigned geomID, void* ptr)
-    void* rtcGetUserData (RTCScene scene, unsigned geomID)
-    void rtcDeleteGeometry (RTCScene scene, unsigned geomID)
-
+    unsigned int rtcAttachGeometry (RTCScene hscene, RTCGeometry hgeometry)
