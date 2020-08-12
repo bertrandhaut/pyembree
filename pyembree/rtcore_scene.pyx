@@ -1,13 +1,10 @@
-cimport cython
-cimport numpy as np
 import numpy as np
 import logging
 import numbers
+import time
 
 cimport rtcore as rtc
 cimport rtcore_ray as rtcr
-cimport rtcore_geometry as rtcg
-
 
 
 log = logging.getLogger(__name__)
@@ -46,6 +43,7 @@ cdef class EmbreeScene:
         if self.is_committed == 0:
             rtcCommitScene(self.scene_i)
             self.is_committed = 1
+        start_time = time.time()
 
         cdef int nv = vec_origins.shape[0]
         cdef int vo_i, vd_i, vd_step
@@ -57,10 +55,10 @@ cdef class EmbreeScene:
             query_type = intersect
         elif query == 'OCCLUDED':
             query_type = occluded
-            raise NotImplemented()
+            raise NotImplemented
         elif query == 'DISTANCE':
             query_type = distance
-            raise NotImplemented()
+            raise NotImplemented
 
         else:
             raise ValueError("Embree ray query type %s not recognized." 
@@ -135,6 +133,9 @@ cdef class EmbreeScene:
                 raise NotImplemented()
                 # rtcOccluded(self.scene_i, ray)
                 # intersect_ids[i] = ray.geomID
+
+        end_time = time.time()
+        log.debug(f'Total elapsed time {end_time-start_time:.1f}')
 
         if output:
             return {'u':u, 'v':v, 'Ng': Ng, 'tfar': tfars, 'primID': primID, 'geomID': geomID}
