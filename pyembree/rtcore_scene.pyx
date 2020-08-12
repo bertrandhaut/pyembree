@@ -10,7 +10,7 @@ cimport rtcore_geometry as rtcg
 
 
 
-log = logging.getLogger('pyembree')
+log = logging.getLogger(__name__)
 
 cdef void error_printer(void * user_ptr, const rtc.RTCError code, const char *_str):
     """
@@ -29,11 +29,14 @@ cdef class EmbreeScene:
     def __init__(self, rtc.EmbreeDevice embree_device=None):
         if embree_device is None:
             # We store the embree device inside EmbreeScene to avoid premature deletion
-            self.embree_device = rtc.EmbreeDevice()
-            embree_device = self.embree_device
+            log.debug('Creating new device')
+            embree_device = rtc.EmbreeDevice()
+            log.debug('Device created')
 
-        rtc.rtcSetDeviceErrorFunction(embree_device.device, error_printer, NULL)
-        self.scene_i = rtcNewScene(embree_device.device)
+        self.embree_device = embree_device
+
+        rtc.rtcSetDeviceErrorFunction(self.embree_device.device, error_printer, NULL)
+        self.scene_i = rtcNewScene(self.embree_device.device)
         self.is_committed = 0
 
     def run(self, np.ndarray[np.float32_t, ndim=2] vec_origins,

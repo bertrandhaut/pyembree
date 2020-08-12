@@ -25,8 +25,10 @@ cdef void print_error(RTCError code):
 cdef class EmbreeDevice:
     def __init__(self):
         self.device = rtcNewDevice(NULL)
+        log.debug('rtcNewDevice created and stored')
 
     def __dealloc__(self):
+        log.debug('ReleasingDevice')
         rtcReleaseDevice(self.device)
 
     def __repr__(self):

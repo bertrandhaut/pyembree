@@ -1,3 +1,6 @@
+# import logging
+# logging.basicConfig(level=logging.DEBUG)
+
 from unittest import TestCase
 import numpy as np
 from pyembree import rtcore as rtc
@@ -36,23 +39,23 @@ def define_rays_origins_and_directions():
     dirs[:, 0] = 1.0
     return origins, dirs
 
-
-class TestPyEmbree(TestCase):
-    def test_pyembree_should_be_able_to_display_embree_version(self):
-        embreeDevice = rtc.EmbreeDevice()
-        print(embreeDevice)
-
-    def test_pyembree_should_be_able_to_create_a_scene(self):
-        embreeDevice = rtc.EmbreeDevice()
-        scene = rtcs.EmbreeScene(embreeDevice)
-
-    def test_pyembree_should_be_able_to_create_several_scenes(self):
-        embreeDevice = rtc.EmbreeDevice()
-        scene1 = rtcs.EmbreeScene(embreeDevice)
-        scene2 = rtcs.EmbreeScene(embreeDevice)
-
-    def test_pyembree_should_be_able_to_create_a_device_if_not_provided(self):
-        scene = rtcs.EmbreeScene()
+#
+# class TestPyEmbree(TestCase):
+#     def test_pyembree_should_be_able_to_display_embree_version(self):
+#         embreeDevice = rtc.EmbreeDevice()
+#         print(embreeDevice)
+#
+#     def test_pyembree_should_be_able_to_create_a_scene(self):
+#         embreeDevice = rtc.EmbreeDevice()
+#         scene = rtcs.EmbreeScene(embreeDevice)
+#
+#     def test_pyembree_should_be_able_to_create_several_scenes(self):
+#         embreeDevice = rtc.EmbreeDevice()
+#         scene1 = rtcs.EmbreeScene(embreeDevice)
+#         scene2 = rtcs.EmbreeScene(embreeDevice)
+#
+#     def test_pyembree_should_be_able_to_create_a_device_if_not_provided(self):
+#         scene = rtcs.EmbreeScene()
 
 class TestIntersectionTriangles(TestCase):
 
@@ -63,6 +66,7 @@ class TestIntersectionTriangles(TestCase):
 
         self.embreeDevice = rtc.EmbreeDevice()
         self.scene = rtcs.EmbreeScene(self.embreeDevice)
+
         mesh = TriangleMesh(self.scene, triangles)
 
         origins, dirs = define_rays_origins_and_directions()
@@ -73,9 +77,9 @@ class TestIntersectionTriangles(TestCase):
         res = self.scene.run(self.origins, self.dirs)
         self.assertTrue([0, 1, 1, -1], res)
 
-    def test_intersect_distance(self):
-        res = self.scene.run(self.origins, self.dirs,query='DISTANCE')
-        self.assertTrue(np.allclose([6.9, 6.9, 6.9,1e37], res))
+    # def test_intersect_distance(self):
+    #     res = self.scene.run(self.origins, self.dirs,query='DISTANCE')
+    #     self.assertTrue(np.allclose([6.9, 6.9, 6.9,1e37], res))
 
 
     def test_intersect(self):
@@ -136,8 +140,9 @@ class TestIntersectionTetrahedron(TestCase):
         vertices = [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0)]
         vertices = np.array(vertices, 'float32')
         indices = np.array([[0, 1, 2, 3]], 'uint32')
-        self.embreeDevice = rtc.EmbreeDevice()
-        self.scene = rtcs.EmbreeScene(self.embreeDevice)
+        # self.embreeDevice = rtc.EmbreeDevice()
+        # self.scene = rtcs.EmbreeScene(self.embreeDevice)
+        self.scene = rtcs.EmbreeScene()
         mesh = ElementMesh(self.scene, vertices, indices)
 
         N = 2
@@ -204,6 +209,7 @@ class TestIntersectionHexahedron(TestCase):
         self.assertTrue(np.allclose([0.1, 0.1], tfar))
         self.assertTrue(np.allclose([0.1, 0.2], u))
         self.assertTrue(np.allclose([0.8, 0.6], v))
+
 
 if __name__ == '__main__':
     from unittest import main

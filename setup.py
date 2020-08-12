@@ -8,12 +8,10 @@ from Cython.Build import cythonize
 include_path = [np.get_include()]
 
 ext_modules = cythonize('pyembree/*.pyx',
-                        include_path=include_path,
-                        gdb_debug=True)
+                        include_path=include_path)
 for ext in ext_modules:
     ext.include_dirs = include_path
     ext.libraries = ["embree3"]
-
 
 
 setup(

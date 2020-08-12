@@ -1,4 +1,5 @@
 # distutils: language=c++
+import logging
 
 cimport numpy as np
 cimport rtcore as rtc
@@ -8,6 +9,7 @@ cimport rtcore_geometry as rtcg
 cimport rtcore_buffer as rtcb
 from rtcore cimport Vertex, Triangle
 
+log = logging.getLogger(__name__)
 
 cdef extern from "mesh_construction.h":
     int triangulate_hex[12][3]
@@ -70,12 +72,13 @@ cdef class TriangleMesh:
         # but also means we have exactly three times as many vertices as
         # triangles.
 
-        print('1-work', f"{0:x}".format(<unsigned long>&scene.embree_device.device), rtcg.RTC_GEOMETRY_TYPE_TRIANGLE)
+        log.debug(f'_build_from_flat device address={<unsigned long>&scene.embree_device.device:x}, {rtcg.RTC_GEOMETRY_TYPE_TRIANGLE}')
         cdef rtcg.RTCGeometry mesh = rtcg.rtcNewGeometry(scene.embree_device.device,
                                                          rtcg.RTC_GEOMETRY_TYPE_TRIANGLE)
-
+        log.debug('Geometry mesh created')
         cdef Vertex* vertices = <Vertex*> rtcg.rtcSetNewGeometryBuffer(mesh, rtcb.RTC_BUFFER_TYPE_VERTEX, 0, rtc.RTC_FORMAT_FLOAT3,
                                                                        sizeof(Vertex), 3*nt)
+        log.debug('vertices buffer created')
 
         for i in range(nt):
             for j in range(3):
@@ -191,38 +194,29 @@ cdef class ElementMesh(TriangleMesh):
         # into two triangles.
         cdef int nt = 6*2*ne
 
-        print('1-fails', f"{0:x}".format(<unsigned long>&scene.embree_device.device), rtcg.RTC_GEOMETRY_TYPE_TRIANGLE)
         cdef rtcg.RTCGeometry mesh = rtcg.rtcNewGeometry(scene.embree_device.device,
                                                          rtcg.RTC_GEOMETRY_TYPE_TRIANGLE)
 
-        print('2')
         cdef Vertex* vertices = <Vertex*> rtcg.rtcSetNewGeometryBuffer(mesh, rtcb.RTC_BUFFER_TYPE_VERTEX, 0, rtc.RTC_FORMAT_FLOAT3,
                                                                        sizeof(Vertex), nv)
 
-        print('3')
         for i in range(nv):
             vertices[i].x = quad_vertices[i, 0]
             vertices[i].y = quad_vertices[i, 1]
             vertices[i].z = quad_vertices[i, 2]
 
-        print('4')
         cdef Triangle* triangles = <Triangle*> rtcg.rtcSetNewGeometryBuffer(mesh, rtcb.RTC_BUFFER_TYPE_INDEX, 0, rtc.RTC_FORMAT_UINT3,
                                                                           sizeof(Triangle), nt)
-        print('5')
         for i in range(ne):
             for j in range(12):
                 triangles[12*i+j].v0 = quad_indices[i][triangulate_hex[j][0]]
                 triangles[12*i+j].v1 = quad_indices[i][triangulate_hex[j][1]]
                 triangles[12*i+j].v2 = quad_indices[i][triangulate_hex[j][2]]
 
-        print('6')
         rtcg.rtcCommitGeometry(mesh)
-        print('7')
         cdef unsigned int geomId = rtcg.rtcAttachGeometry(scene.scene_i, mesh)
-        print('8')
         rtcg.rtcReleaseGeometry(mesh)
 
-        print('9')
         self.vertices = vertices
         self.indices = triangles
         self.geomId = geomId
