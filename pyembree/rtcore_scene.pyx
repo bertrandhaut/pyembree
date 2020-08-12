@@ -21,18 +21,25 @@ cdef void error_printer(void * user_ptr, const rtc.RTCError code, const char *_s
     rtc.print_error(code)
     log.error("ERROR MESSAGE: %s" % _str)
 
+# cdef bint memory_monitor_printer(void* ptr, ssize_t bytes, bint post):
+#     log.debug('memory monitor:')
+#     log.debug('bytes', bytes, 'post', post)
+#     return True
+#
 
 cdef class EmbreeScene:
-    def __init__(self, rtc.EmbreeDevice embree_device=None):
+    def __cinit__(self, rtc.EmbreeDevice embree_device=None):
         if embree_device is None:
             # We store the embree device inside EmbreeScene to avoid premature deletion
-            log.debug('Creating new device')
             embree_device = rtc.EmbreeDevice()
-            log.debug('Device created')
+            log.debug('New device created')
 
         self.embree_device = embree_device
+        rtc.rtcRetainDevice(self.embree_device.device)  # will be released in desctructor
 
         rtc.rtcSetDeviceErrorFunction(self.embree_device.device, error_printer, NULL)
+        # rtc.rtcSetDeviceMemoryMonitorFunction(self.embree_device.device, memory_monitor_printer, NULL)
+
         self.scene_i = rtcNewScene(self.embree_device.device)
         self.is_committed = 0
 
@@ -146,5 +153,5 @@ cdef class EmbreeScene:
                 return intersect_ids
 
     def __dealloc__(self):
-
         rtcReleaseScene(self.scene_i)
+        log.debug(f'Scene released')

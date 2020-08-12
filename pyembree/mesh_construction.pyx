@@ -96,7 +96,6 @@ cdef class TriangleMesh:
 
         rtcg.rtcCommitGeometry(mesh)
         cdef unsigned int geomId = rtcg.rtcAttachGeometry(scene.scene_i, mesh)
-
         rtcg.rtcReleaseGeometry(mesh)
 
         self.vertices = vertices

@@ -1,35 +1,35 @@
 import logging
 
 
-log = logging.getLogger('pyembree')
+logger = logging.getLogger(__name__)
 
 cdef void print_error(RTCError code):
     if code == RTC_ERROR_NONE:
-        log.error("ERROR: No error")
+        logger.error("ERROR: No error")
     elif code == RTC_ERROR_UNKNOWN:
-        log.error("ERROR: Unknown error")
+        logger.error("ERROR: Unknown error")
     elif code == RTC_ERROR_INVALID_ARGUMENT:
-        log.error("ERROR: Invalid argument")
+        logger.error("ERROR: Invalid argument")
     elif code == RTC_ERROR_INVALID_OPERATION:
-        log.error("ERROR: Invalid operation")
+        logger.error("ERROR: Invalid operation")
     elif code == RTC_ERROR_OUT_OF_MEMORY:
-        log.error("ERROR: Out of memory")
+        logger.error("ERROR: Out of memory")
     elif code == RTC_ERROR_UNSUPPORTED_CPU:
-        log.error("ERROR: Unsupported CPU")
+        logger.error("ERROR: Unsupported CPU")
     elif code == RTC_ERROR_CANCELLED:
-        log.error("ERROR: Cancelled")
+        logger.error("ERROR: Cancelled")
     else:
         raise RuntimeError
 
 
 cdef class EmbreeDevice:
-    def __init__(self):
+    def __cinit__(self):
         self.device = rtcNewDevice(NULL)
-        log.debug('rtcNewDevice created and stored')
+        logger.debug('rtcNewDevice created and stored')
 
     def __dealloc__(self):
-        log.debug('ReleasingDevice')
         rtcReleaseDevice(self.device)
+        logger.debug('Device released')
 
     def __repr__(self):
         return 'Embree version:  {0}.{1}.{2}'.format(RTC_VERSION_MAJOR,

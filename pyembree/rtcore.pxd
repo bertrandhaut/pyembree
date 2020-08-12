@@ -14,6 +14,7 @@ cdef extern from "embree3/rtcore.h":
     ctypedef void* RTCDevice
 
     RTCDevice rtcNewDevice(const char* cfg)
+    void rtcRetainDevice(RTCDevice device)
     void rtcReleaseDevice(RTCDevice device)
 
     cdef enum RTCError:
@@ -28,6 +29,9 @@ cdef extern from "embree3/rtcore.h":
 
     ctypedef void (*RTCErrorFunc)(void* userPtr, const RTCError code, const char* str)
     void rtcSetDeviceErrorFunction(RTCDevice device, RTCErrorFunc func, void* userPtr)
+
+    # ctypedef bint (*RTCMemoryMonitorFunction)(void* userPtr, ssize_t bytes, bint post)
+    # void rtcSetDeviceMemoryMonitorFunction(RTCDevice device, RTCMemoryMonitorFunction func, void* userPtr)
 
     cdef enum RTCIntersectContextFlags:
         RTC_INTERSECT_CONTEXT_FLAG_NONE
