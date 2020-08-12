@@ -58,42 +58,48 @@ cdef class TriangleMesh:
                  np.ndarray indices = None):
 
         if indices is None:
-            raise NotImplemented()  #TODO implement
             self._build_from_flat(scene, vertices)
         else:
             self._build_from_indices(scene, vertices, indices)
 
-    # cdef void _build_from_flat(self, rtcs.EmbreeScene scene,
-    #                            np.ndarray tri_vertices):
-    #     cdef int i, j
-    #     cdef int nt = tri_vertices.shape[0]
-    #     # In this scheme, we don't share any vertices.  This leads to cracks,
-    #     # but also means we have exactly three times as many vertices as
-    #     # triangles.
-    #     cdef unsigned int mesh = rtcg.rtcNewTriangleMesh(scene.scene_i,
-    #                 rtcg.RTC_GEOMETRY_STATIC, nt, nt*3, 1)
-    #
-    #     cdef Vertex* vertices = <Vertex*> rtcg.rtcMapBuffer(scene.scene_i, mesh,
-    #                     rtcg.RTC_VERTEX_BUFFER)
-    #
-    #     for i in range(nt):
-    #         for j in range(3):
-    #             vertices[i*3 + j].x = tri_vertices[i,j,0]
-    #             vertices[i*3 + j].y = tri_vertices[i,j,1]
-    #             vertices[i*3 + j].z = tri_vertices[i,j,2]
-    #     rtcg.rtcUnmapBuffer(scene.scene_i, mesh, rtcg.RTC_VERTEX_BUFFER)
-    #
-    #     cdef Triangle* triangles = <Triangle*> rtcg.rtcMapBuffer(scene.scene_i,
-    #                     mesh, rtcg.RTC_INDEX_BUFFER)
-    #     for i in range(nt):
-    #         triangles[i].v0 = i*3 + 0
-    #         triangles[i].v1 = i*3 + 1
-    #         triangles[i].v2 = i*3 + 2
-    #
-    #     rtcg.rtcUnmapBuffer(scene.scene_i, mesh, rtcg.RTC_INDEX_BUFFER)
-    #     self.vertices = vertices
-    #     self.indices = triangles
-    #     self.mesh = mesh
+    cdef void _build_from_flat(self, rtcs.EmbreeScene scene,
+                               np.ndarray tri_vertices):
+        cdef int i, j
+        cdef int nt = tri_vertices.shape[0]
+        # In this scheme, we don't share any vertices.  This leads to cracks,
+        # but also means we have exactly three times as many vertices as
+        # triangles.
+
+        print('1-work', f"{0:x}".format(<unsigned long>&scene.embree_device.device), rtcg.RTC_GEOMETRY_TYPE_TRIANGLE)
+        cdef rtcg.RTCGeometry mesh = rtcg.rtcNewGeometry(scene.embree_device.device,
+                                                         rtcg.RTC_GEOMETRY_TYPE_TRIANGLE)
+
+        cdef Vertex* vertices = <Vertex*> rtcg.rtcSetNewGeometryBuffer(mesh, rtcb.RTC_BUFFER_TYPE_VERTEX, 0, rtc.RTC_FORMAT_FLOAT3,
+                                                                       sizeof(Vertex), 3*nt)
+
+        for i in range(nt):
+            for j in range(3):
+                vertices[i*3 + j].x = tri_vertices[i,j,0]
+                vertices[i*3 + j].y = tri_vertices[i,j,1]
+                vertices[i*3 + j].z = tri_vertices[i,j,2]
+
+        cdef Triangle* triangles = <Triangle*> rtcg.rtcSetNewGeometryBuffer(mesh, rtcb.RTC_BUFFER_TYPE_INDEX, 0, rtc.RTC_FORMAT_UINT3,
+                                                                          sizeof(Triangle), nt)
+
+        for i in range(nt):
+            triangles[i].v0 = i*3 + 0
+            triangles[i].v1 = i*3 + 1
+            triangles[i].v2 = i*3 + 2
+
+        rtcg.rtcCommitGeometry(mesh)
+        cdef unsigned int geomId = rtcg.rtcAttachGeometry(scene.scene_i, mesh)
+
+        rtcg.rtcReleaseGeometry(mesh)
+
+        self.vertices = vertices
+        self.indices = triangles
+        self.geomId = geomId
+
 
     cdef void _build_from_indices(self, rtcs.EmbreeScene scene,
                                   np.ndarray tri_vertices,
@@ -121,13 +127,13 @@ cdef class TriangleMesh:
             triangles[i].v1 = tri_indices[i][1]
             triangles[i].v2 = tri_indices[i][2]
 
-
-        cdef unsigned int geomID = rtcg.rtcAttachGeometry(scene.scene_i, mesh)
+        rtcg.rtcCommitGeometry(mesh)
+        cdef unsigned int geomId = rtcg.rtcAttachGeometry(scene.scene_i, mesh)
         rtcg.rtcReleaseGeometry(mesh)
 
         self.vertices = vertices
         self.indices = triangles
-        self.geomID = geomID
+        self.geomId = geomId
 
 cdef class ElementMesh(TriangleMesh):
     r'''
@@ -185,34 +191,41 @@ cdef class ElementMesh(TriangleMesh):
         # into two triangles.
         cdef int nt = 6*2*ne
 
-
+        print('1-fails', f"{0:x}".format(<unsigned long>&scene.embree_device.device), rtcg.RTC_GEOMETRY_TYPE_TRIANGLE)
         cdef rtcg.RTCGeometry mesh = rtcg.rtcNewGeometry(scene.embree_device.device,
                                                          rtcg.RTC_GEOMETRY_TYPE_TRIANGLE)
 
+        print('2')
         cdef Vertex* vertices = <Vertex*> rtcg.rtcSetNewGeometryBuffer(mesh, rtcb.RTC_BUFFER_TYPE_VERTEX, 0, rtc.RTC_FORMAT_FLOAT3,
                                                                        sizeof(Vertex), nv)
 
-
+        print('3')
         for i in range(nv):
             vertices[i].x = quad_vertices[i, 0]
             vertices[i].y = quad_vertices[i, 1]
             vertices[i].z = quad_vertices[i, 2]
 
+        print('4')
         cdef Triangle* triangles = <Triangle*> rtcg.rtcSetNewGeometryBuffer(mesh, rtcb.RTC_BUFFER_TYPE_INDEX, 0, rtc.RTC_FORMAT_UINT3,
                                                                           sizeof(Triangle), nt)
-
+        print('5')
         for i in range(ne):
             for j in range(12):
                 triangles[12*i+j].v0 = quad_indices[i][triangulate_hex[j][0]]
                 triangles[12*i+j].v1 = quad_indices[i][triangulate_hex[j][1]]
                 triangles[12*i+j].v2 = quad_indices[i][triangulate_hex[j][2]]
 
-        cdef unsigned int geomID = rtcg.rtcAttachGeometry(scene.scene_i, mesh)
+        print('6')
+        rtcg.rtcCommitGeometry(mesh)
+        print('7')
+        cdef unsigned int geomId = rtcg.rtcAttachGeometry(scene.scene_i, mesh)
+        print('8')
         rtcg.rtcReleaseGeometry(mesh)
 
+        print('9')
         self.vertices = vertices
         self.indices = triangles
-        self.geomID = geomID
+        self.geomId = geomId
 
     cdef void _build_from_tetrahedra(self, rtcs.EmbreeScene scene,
                                      np.ndarray tetra_vertices,
@@ -248,9 +261,10 @@ cdef class ElementMesh(TriangleMesh):
                 triangles[4*i+j].v1 = tetra_indices[i][triangulate_tetra[j][1]]
                 triangles[4*i+j].v2 = tetra_indices[i][triangulate_tetra[j][2]]
 
-        cdef unsigned int geomID = rtcg.rtcAttachGeometry(scene.scene_i, mesh)
+        rtcg.rtcCommitGeometry(mesh)
+        cdef unsigned int geomId = rtcg.rtcAttachGeometry(scene.scene_i, mesh)
         rtcg.rtcReleaseGeometry(mesh)
 
         self.vertices = vertices
         self.indices = triangles
-        self.geomID = geomID
+        self.geomId = geomId
