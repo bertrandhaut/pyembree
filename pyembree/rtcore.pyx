@@ -21,7 +21,6 @@ cdef void print_error(RTCError code):
     else:
         raise RuntimeError
 
-
 cdef class EmbreeDevice:
     def __cinit__(self):
         self.device = rtcNewDevice(NULL)

@@ -15,6 +15,9 @@ cdef extern from "embree3/rtcore_scene.h":
     ctypedef struct RTCRayHit16
     ctypedef struct RTCRayHitNp
 
+    ctypedef void* RTCScene
+    RTCScene rtcNewScene(rtc.RTCDevice device)
+
     cdef enum RTCSceneFlags:
         RTC_SCENE_FLAG_NONE
         RTC_SCENE_FLAG_DYNAMIC
@@ -28,10 +31,8 @@ cdef extern from "embree3/rtcore_scene.h":
 #        RTC_INTERSECT8
 #        RTC_INTERSECT16
 
-    # ctypedef void* RTCDevice
-    ctypedef void* RTCScene
+    void rtcSetSceneFlags(RTCScene scene, RTCSceneFlags flags)
 
-    RTCScene rtcNewScene(rtc.RTCDevice device)
     #RTCScene rtcDeviceNewScene(rtc.RTCDevice device, RTCSceneFlags flags, RTCAlgorithmFlags aflags)
 
     ctypedef bint (*RTCProgressMonitorFunc)(void* ptr, const double n)
@@ -68,6 +69,7 @@ cdef extern from "embree3/rtcore_scene.h":
 cdef class EmbreeScene:
     cdef RTCScene scene_i
     # Optional device used if not given, it should be as input of EmbreeScene
+    cdef bint compact
     cdef public int is_committed
     cdef rtc.EmbreeDevice embree_device
 

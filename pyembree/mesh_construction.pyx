@@ -51,8 +51,8 @@ cdef class TriangleMesh:
 
     '''
 
-    cdef Vertex* vertices
-    cdef Triangle* indices
+    # cdef Vertex* vertices
+    # cdef Triangle* indices
     cdef unsigned int geomId
 
     def __init__(self, rtcs.EmbreeScene scene,
@@ -98,8 +98,6 @@ cdef class TriangleMesh:
         cdef unsigned int geomId = rtcg.rtcAttachGeometry(scene.scene_i, mesh)
         rtcg.rtcReleaseGeometry(mesh)
 
-        self.vertices = vertices
-        self.indices = triangles
         self.geomId = geomId
 
 
@@ -122,7 +120,7 @@ cdef class TriangleMesh:
             vertices[i].z = tri_vertices[i, 2]
 
         cdef Triangle* triangles = <Triangle*> rtcg.rtcSetNewGeometryBuffer(mesh, rtcb.RTC_BUFFER_TYPE_INDEX, 0, rtc.RTC_FORMAT_UINT3,
-                                                                          sizeof(Triangle), nt)
+                                                                            sizeof(Triangle), nt)
 
         for i in range(nt):
             triangles[i].v0 = tri_indices[i][0]
@@ -131,10 +129,9 @@ cdef class TriangleMesh:
 
         rtcg.rtcCommitGeometry(mesh)
         cdef unsigned int geomId = rtcg.rtcAttachGeometry(scene.scene_i, mesh)
+        log.debug('Geometry committed and attached to scene')
         rtcg.rtcReleaseGeometry(mesh)
 
-        self.vertices = vertices
-        self.indices = triangles
         self.geomId = geomId
 
 cdef class ElementMesh(TriangleMesh):
@@ -216,8 +213,6 @@ cdef class ElementMesh(TriangleMesh):
         cdef unsigned int geomId = rtcg.rtcAttachGeometry(scene.scene_i, mesh)
         rtcg.rtcReleaseGeometry(mesh)
 
-        self.vertices = vertices
-        self.indices = triangles
         self.geomId = geomId
 
     cdef void _build_from_tetrahedra(self, rtcs.EmbreeScene scene,
@@ -258,6 +253,4 @@ cdef class ElementMesh(TriangleMesh):
         cdef unsigned int geomId = rtcg.rtcAttachGeometry(scene.scene_i, mesh)
         rtcg.rtcReleaseGeometry(mesh)
 
-        self.vertices = vertices
-        self.indices = triangles
         self.geomId = geomId

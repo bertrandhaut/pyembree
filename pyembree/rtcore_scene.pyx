@@ -28,28 +28,33 @@ cdef void error_printer(void * user_ptr, const rtc.RTCError code, const char *_s
 #
 
 cdef class EmbreeScene:
-    def __cinit__(self, rtc.EmbreeDevice embree_device=None):
+    def __cinit__(self, rtc.EmbreeDevice embree_device=None, compact=False):
         if embree_device is None:
             # We store the embree device inside EmbreeScene to avoid premature deletion
             embree_device = rtc.EmbreeDevice()
             log.debug('New device created')
 
         self.embree_device = embree_device
-        rtc.rtcRetainDevice(self.embree_device.device)  # will be released in desctructor
-
+        #
         rtc.rtcSetDeviceErrorFunction(self.embree_device.device, error_printer, NULL)
-        # rtc.rtcSetDeviceMemoryMonitorFunction(self.embree_device.device, memory_monitor_printer, NULL)
-
+        # # rtc.rtcSetDeviceMemoryMonitorFunction(self.embree_device.device, memory_monitor_printer, NULL)
+        #
         self.scene_i = rtcNewScene(self.embree_device.device)
+        if compact:
+            log.debug('Using compact flag')
+            rtcSetSceneFlags(self.scene_i, RTC_SCENE_FLAG_COMPACT)
         self.is_committed = 0
+
+    def commit(self):
+        if self.is_committed == 0:
+            rtcCommitScene(self.scene_i)
+            self.is_committed = 1
 
     def run(self, np.ndarray[np.float32_t, ndim=2] vec_origins,
                   np.ndarray[np.float32_t, ndim=2] vec_directions,
                   dists=None,query='INTERSECT',output=None):
+        self.commit()
 
-        if self.is_committed == 0:
-            rtcCommitScene(self.scene_i)
-            self.is_committed = 1
         start_time = time.time()
 
         cdef int nv = vec_origins.shape[0]
