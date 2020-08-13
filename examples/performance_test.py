@@ -13,7 +13,7 @@ import trimesh.creation
 import numpy as np
 import gc
 
-from pyembree.rtcore_scene import EmbreeScene
+from pyembree.rtcore_scene import EmbreeScene, SceneFlags
 from pyembree.mesh_construction import TriangleMesh
 
 __author__ = 'Laborelec, Math & IT service'
@@ -53,7 +53,8 @@ def check_sphere_visibility(subdivisions=3, check_assert=True):
     """
     vertices, faces, ray_origins, ray_directions = get_prob_data(subdivisions=subdivisions)
 
-    scene = EmbreeScene(compact=True)
+    flag = SceneFlags.COMPACT
+    scene = EmbreeScene(flags=flag)
     logger.info('Scene created')
     logger.info('Before geometry creation ' + get_current_memory_str())
     start_time = time.time()
@@ -100,4 +101,4 @@ def check_sphere_visibility(subdivisions=3, check_assert=True):
 
 
 if __name__ == '__main__':
-    check_sphere_visibility(10, check_assert=False)
+    check_sphere_visibility(3, check_assert=True)

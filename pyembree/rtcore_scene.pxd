@@ -69,7 +69,7 @@ cdef extern from "embree3/rtcore_scene.h":
 cdef class EmbreeScene:
     cdef RTCScene scene_i
     # Optional device used if not given, it should be as input of EmbreeScene
-    cdef bint compact
+    cdef RTCSceneFlags flags
     cdef public int is_committed
     cdef rtc.EmbreeDevice embree_device
 

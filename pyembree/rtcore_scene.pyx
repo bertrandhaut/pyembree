@@ -2,6 +2,7 @@ import numpy as np
 import logging
 import numbers
 import time
+from enum import Enum
 
 cimport rtcore as rtc
 cimport rtcore_ray as rtcr
@@ -21,6 +22,14 @@ cdef void error_printer(void * user_ptr, const rtc.RTCError code, const char *_s
     rtc.print_error(code)
     log.error("ERROR MESSAGE: %s" % _str)
 
+
+class SceneFlags(Enum):
+    NONE = 0
+    DYNAMIC = (1<<0)
+    COMPACT = (1<<1)
+    ROBUST =  (1<<2)
+    CONTEXT_FILTER_FUNCTION = (1<<3)
+
 # cdef bint memory_monitor_printer(void* ptr, ssize_t bytes, bint post):
 #     log.debug('memory monitor:')
 #     log.debug('bytes', bytes, 'post', post)
@@ -28,7 +37,7 @@ cdef void error_printer(void * user_ptr, const rtc.RTCError code, const char *_s
 #
 
 cdef class EmbreeScene:
-    def __cinit__(self, rtc.EmbreeDevice embree_device=None, compact=False):
+    def __cinit__(self, rtc.EmbreeDevice embree_device=None, flags=SceneFlags.NONE):
         if embree_device is None:
             # We store the embree device inside EmbreeScene to avoid premature deletion
             embree_device = rtc.EmbreeDevice()
@@ -40,9 +49,9 @@ cdef class EmbreeScene:
         # # rtc.rtcSetDeviceMemoryMonitorFunction(self.embree_device.device, memory_monitor_printer, NULL)
         #
         self.scene_i = rtcNewScene(self.embree_device.device)
-        if compact:
-            log.debug('Using compact flag')
-            rtcSetSceneFlags(self.scene_i, RTC_SCENE_FLAG_COMPACT)
+        if flags != SceneFlags.NONE:
+            log.debug(f'Setting flags b{flags.value:b}')
+            rtcSetSceneFlags(self.scene_i, flags.value)
         self.is_committed = 0
 
     def commit(self):
